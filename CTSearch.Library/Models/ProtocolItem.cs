@@ -8,8 +8,8 @@ namespace CTSearch.Library.Models
 {
     public record ProtocolItem
     {
-        string ProtocolNo { get; init; } 
-        string Title { get; set; }
-        string Status { get; set; }
+        public string ProtocolNo { get; init; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
     }
 }

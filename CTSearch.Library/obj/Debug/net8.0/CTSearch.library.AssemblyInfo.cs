@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CTSearch.library")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4279553ac1460c643f500b5f8a83b16dc6dcb753")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+556fc718f71efec663d1343eb0289d7d8d43bf80")]
 [assembly: System.Reflection.AssemblyProductAttribute("CTSearch.library")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CTSearch.library")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

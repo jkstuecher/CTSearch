@@ -12,15 +12,21 @@ namespace CTSearch.Cons
     {
         static async Task Main(string[] args)
         {
-            IOnCoreService _onCoreService;
-
             var serviceProvider = new ServiceCollection()
            .AddLogging()
-           .AddTransient<IOnCoreService, OnCoreService>()
+           //.AddTransient<IOnCoreService, OnCoreService>()
            .BuildServiceProvider();
 
-            
+            //building oncore service with HttpClient
+            using var httpClient = new HttpClient
+            {
+                BaseAddress = new Uri("https://osu-oncore-test.advarra.app/arp/api/")
+            };
+            httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+            IOnCoreService _onCoreService = new OnCoreService(httpClient);
 
+
+            //removed
             //_onCoreService = serviceProvider.GetService<IOnCoreService>();
 
             // 1. Configuration
@@ -77,7 +83,7 @@ namespace CTSearch.Cons
         }
 
 // 4. Data Models (Based on ARP API Specification)
-public record ProtocolSearchResult(int count, List<ProtocolItem> values);
+    public record ProtocolSearchResult(int count, List<ProtocolItem> values);
 
         public record ProtocolItem(
             string protocolNo,

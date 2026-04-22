@@ -1,4 +1,5 @@
 using CTSearch.blzr.Components;
+using CTSearch.Library.Services;
 
 namespace CTSearch.blzr
 {
@@ -11,6 +12,16 @@ namespace CTSearch.blzr
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+            builder.Services.AddHttpClient<IOnCoreService, OnCoreService>((serviceProvider, httpClient) =>
+            {
+                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+                var baseUrl = configuration["OnCoreApi:BaseUrl"]
+                    ?? throw new InvalidOperationException("Missing configuration value 'OnCoreApi:BaseUrl'.");
+
+                httpClient.BaseAddress = new Uri(baseUrl);
+                httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
+            builder.Services.AddSingleton<ISearchValueCatalog, EmbeddedSearchValueCatalog>();
 
             var app = builder.Build();
 

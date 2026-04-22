@@ -7,7 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="RefDocs\" />
+    <Folder Include="RefDocs\Values\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="RefDocs\Values\*.txt" LogicalName="CTSearch.Library.RefDocs.Values.%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

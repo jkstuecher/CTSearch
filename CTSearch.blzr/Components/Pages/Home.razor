@@ -1,7 +1,411 @@
-﻿@page "/"
+@page "/"
+@rendermode InteractiveServer
+@inject IOnCoreService OnCoreService
+@inject ISearchValueCatalog SearchValueCatalog
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Clinical Trial Search</PageTitle>
 
-<h1>Hello, world!</h1>
+<section class="hero">
+    <div>
+        <p class="eyebrow">Clinical Trial Search</p>
+        <h4>Search live protocol data by keyword and OnCore search parameters.</h4>
+        <p class="eyebrow">This is for demo purposes. Data returned in searches should not be assumed to be accurate.</p>
+    </div>
+</section>
 
-Welcome to your new app.
+<EditForm Model="searchRequest" FormName="trial-search" OnSubmit="SearchAsync">
+    <div class="search-panel">
+        <div class="search-grid">
+            <div class="field">
+                <label for="keyword">Keyword</label>
+                <InputText id="keyword" @bind-Value="searchRequest.Keyword" class="form-control" placeholder="Cancer, melanoma, leukemia..." />
+            </div>
+
+            <div class="field">
+                <label for="age">Age (not functional)</label>
+                <InputText id="age" @bind-Value="searchRequest.Age" class="form-control" placeholder="Any age" disabled />
+            </div>
+
+            <div class="field">
+                <label for="phase">Phase (not functional)</label>
+                <InputSelect id="phase" @bind-Value="searchRequest.Phase" class="form-select" disabled>
+                    <option value="">Any phase</option>
+                    @foreach (var option in phaseOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="field">
+                <label for="drug">Drug</label>
+                <InputSelect id="drug" @bind-Value="searchRequest.Drug" class="form-select">
+                    <option value="">Any drug</option>
+                    @foreach (var option in drugOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="field">
+                <label for="therapy">Therapy</label>
+                <InputSelect id="therapy" @bind-Value="searchRequest.Therapy" class="form-select">
+                    <option value="">Any therapy</option>
+                    @foreach (var option in therapyOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="field">
+                <label for="diseaseSite">Disease Site</label>
+                <InputSelect id="diseaseSite" @bind-Value="searchRequest.DiseaseSite" class="form-select">
+                    <option value="">Any disease site</option>
+                    @foreach (var option in diseaseSiteOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="field">
+                <label for="managementGroup">Management Group</label>
+                <InputSelect id="managementGroup" @bind-Value="searchRequest.ManagementGroup" class="form-select">
+                    <option value="">Any management group</option>
+                    @foreach (var option in managementGroupOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="field">
+                <label for="oncologyGroup">Oncology Group</label>
+                <InputSelect id="oncologyGroup" @bind-Value="searchRequest.OncologyGroup" class="form-select">
+                    <option value="">Any oncology group</option>
+                    @foreach (var option in oncologyGroupOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="field field-wide">
+                <label for="principalInvestigator">Principal Investigator</label>
+                <InputSelect id="principalInvestigator" @bind-Value="searchRequest.PrincipalInvestigatorId" class="form-select">
+                    <option value="">Any principal investigator</option>
+                    @foreach (var option in principalInvestigatorOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="field field-wide">
+                <label for="studySite">Study Site</label>
+                <InputSelect id="studySite" @bind-Value="searchRequest.StudySite" class="form-select">
+                    <option value="">Any study site</option>
+                    @foreach (var option in studySiteOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" disabled="@isLoading">@(isLoading ? "Searching..." : "Search Trials")</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="ClearSearch" disabled="@isLoading">Clear</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <p class="status-message error">@errorMessage</p>
+        }
+        else if (hasSearched && searchResults is not null)
+        {
+            <div class="status-message">
+                <p>Found @searchResults.Count trial(s).</p>
+                <p class="query-string-label">API query:</p>
+                <code class="query-string-display">/protocol/search?@lastQueryString</code>
+            </div>
+        }
+    </div>
+</EditForm>
+
+<section class="results-layout">
+    <div class="results-panel">
+        <div class="panel-header">
+            <h3>Results</h3>
+        </div>
+
+        @if (!hasSearched)
+        {
+            <p class="placeholder">Enter at least one search term to begin.</p>
+        }
+        else if (isLoading)
+        {
+            <p class="placeholder">Loading matching trials...</p>
+        }
+        else if (searchResults is null || searchResults.Values.Count == 0)
+        {
+            <p class="placeholder">No trials matched this search.</p>
+        }
+        else
+        {
+            <div class="result-list">
+                @foreach (var trial in searchResults.Values)
+                {
+                    var isSelected = string.Equals(selectedProtocolNo, trial.ProtocolNo, StringComparison.OrdinalIgnoreCase);
+                    <button type="button" class="result-card @(isSelected ? "selected" : null)" @onclick="() => LoadDetailsAsync(trial.ProtocolNo)">
+                        <span class="protocol-number">@trial.ProtocolNo</span>
+                        <strong>@trial.Title</strong>
+                        <span class="trial-status">@trial.Status</span>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="details-panel">
+        <div class="panel-header">
+            <h3>Details</h3>
+        </div>
+
+        @if (selectedDetails is null)
+        {
+            <p class="placeholder">Select a trial to view its details.</p>
+        }
+        else
+        {
+            <div class="detail-card">
+                <div class="detail-block">
+                    <span class="detail-label">Protocol Number</span>
+                    <p>@selectedDetails.ProtocolNo</p>
+                </div>
+
+                <div class="detail-block">
+                    <span class="detail-label">Title</span>
+                    <p>@selectedDetails.Title</p>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-block">
+                        <span class="detail-label">Phase</span>
+                        <p>@(selectedDetails.Phase ?? "Not provided")</p>
+                    </div>
+
+                    <div class="detail-block">
+                        <span class="detail-label">NCT ID</span>
+                        <p>@(selectedDetails.NctId ?? "Not provided")</p>
+                    </div>
+                </div>
+
+                <div class="detail-block">
+                    <span class="detail-label">Objective</span>
+                    <p>@(selectedDetails.Objective ?? "Not provided")</p>
+                </div>
+
+                <div class="detail-block">
+                    <span class="detail-label">Disease Sites</span>
+                    @if (selectedDetails.DiseaseSites is { Count: > 0 })
+                    {
+                        <div class="tag-list">
+                            @foreach (var site in selectedDetails.DiseaseSites)
+                            {
+                                <span class="tag">@site</span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p>Not provided</p>
+                    }
+                </div>
+
+                <div class="detail-block">
+                    <span class="detail-label">Eligibility</span>
+                    <p>@(selectedDetails.DetailedEligibility ?? "Not provided")</p>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private readonly SearchRequest searchRequest = new();
+    private IReadOnlyList<SearchValueOption> phaseOptions = Array.Empty<SearchValueOption>();
+    private IReadOnlyList<SearchValueOption> drugOptions = Array.Empty<SearchValueOption>();
+    private IReadOnlyList<SearchValueOption> therapyOptions = Array.Empty<SearchValueOption>();
+    private IReadOnlyList<SearchValueOption> diseaseSiteOptions = Array.Empty<SearchValueOption>();
+    private IReadOnlyList<SearchValueOption> managementGroupOptions = Array.Empty<SearchValueOption>();
+    private IReadOnlyList<SearchValueOption> oncologyGroupOptions = Array.Empty<SearchValueOption>();
+    private IReadOnlyList<SearchValueOption> principalInvestigatorOptions = Array.Empty<SearchValueOption>();
+    private IReadOnlyList<SearchValueOption> studySiteOptions = Array.Empty<SearchValueOption>();
+    private bool hasSearched;
+    private bool isLoading;
+    private string? errorMessage;
+    private string lastQueryString = string.Empty;
+    private string? selectedProtocolNo;
+    private ProtocolSearchResult? searchResults;
+    private ProtocolDetails? selectedDetails;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var phaseTask = SearchValueCatalog.GetPhaseOptionsAsync();
+        var drugTask = SearchValueCatalog.GetDrugOptionsAsync();
+        var therapyTask = SearchValueCatalog.GetTherapyOptionsAsync();
+        var diseaseSiteTask = SearchValueCatalog.GetDiseaseSiteOptionsAsync();
+        var managementGroupTask = SearchValueCatalog.GetManagementGroupOptionsAsync();
+        var oncologyGroupTask = SearchValueCatalog.GetOncologyGroupOptionsAsync();
+        var principalInvestigatorTask = SearchValueCatalog.GetPrincipalInvestigatorOptionsAsync();
+        var studySiteTask = SearchValueCatalog.GetStudySiteOptionsAsync();
+
+        await Task.WhenAll(
+            phaseTask,
+            drugTask,
+            therapyTask,
+            diseaseSiteTask,
+            managementGroupTask,
+            oncologyGroupTask,
+            principalInvestigatorTask,
+            studySiteTask);
+
+        phaseOptions = phaseTask.Result;
+        drugOptions = drugTask.Result;
+        therapyOptions = therapyTask.Result;
+        diseaseSiteOptions = diseaseSiteTask.Result;
+        managementGroupOptions = managementGroupTask.Result;
+        oncologyGroupOptions = oncologyGroupTask.Result;
+        principalInvestigatorOptions = principalInvestigatorTask.Result;
+        studySiteOptions = studySiteTask.Result;
+    }
+
+    private async Task SearchAsync(EditContext _)
+    {
+        errorMessage = null;
+        hasSearched = true;
+        isLoading = true;
+        lastQueryString = BuildQueryString();
+        selectedDetails = null;
+        selectedProtocolNo = null;
+
+        if (string.IsNullOrWhiteSpace(searchRequest.Keyword) &&
+            string.IsNullOrWhiteSpace(searchRequest.Phase) &&
+            string.IsNullOrWhiteSpace(searchRequest.Drug) &&
+            string.IsNullOrWhiteSpace(searchRequest.Therapy) &&
+            string.IsNullOrWhiteSpace(searchRequest.DiseaseSite) &&
+            string.IsNullOrWhiteSpace(searchRequest.ManagementGroup) &&
+            string.IsNullOrWhiteSpace(searchRequest.OncologyGroup) &&
+            string.IsNullOrWhiteSpace(searchRequest.PrincipalInvestigatorId) &&
+            string.IsNullOrWhiteSpace(searchRequest.StudySite))
+        {
+            errorMessage = "Enter at least one search value before running a search.";
+            searchResults = null;
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            searchResults = await OnCoreService.SearchProtocolsAsync(
+                searchRequest.Keyword,
+                searchRequest.Phase,
+                searchRequest.Drug,
+                searchRequest.Therapy,
+                searchRequest.DiseaseSite,
+                searchRequest.ManagementGroup,
+                searchRequest.OncologyGroup,
+                searchRequest.PrincipalInvestigatorId,
+                searchRequest.StudySite);
+
+            if (searchResults.Values.Count > 0)
+            {
+                await LoadDetailsAsync(searchResults.Values[0].ProtocolNo);
+            }
+        }
+        catch (Exception ex)
+        {
+            searchResults = null;
+            errorMessage = $"Search failed: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadDetailsAsync(string protocolNo)
+    {
+        if (string.IsNullOrWhiteSpace(protocolNo))
+        {
+            return;
+        }
+
+        selectedProtocolNo = protocolNo;
+        errorMessage = null;
+
+        try
+        {
+            selectedDetails = await OnCoreService.GetProtocolDetailsAsync(protocolNo);
+        }
+        catch (Exception ex)
+        {
+            selectedDetails = null;
+            errorMessage = $"Unable to load protocol details: {ex.Message}";
+        }
+    }
+
+    private void ClearSearch()
+    {
+        searchRequest.Keyword = string.Empty;
+        searchRequest.Phase = string.Empty;
+        searchRequest.Drug = string.Empty;
+        searchRequest.Therapy = string.Empty;
+        searchRequest.DiseaseSite = string.Empty;
+        searchRequest.ManagementGroup = string.Empty;
+        searchRequest.OncologyGroup = string.Empty;
+        searchRequest.PrincipalInvestigatorId = string.Empty;
+        searchRequest.StudySite = string.Empty;
+        hasSearched = false;
+        isLoading = false;
+        errorMessage = null;
+        lastQueryString = string.Empty;
+        searchResults = null;
+        selectedDetails = null;
+        selectedProtocolNo = null;
+    }
+
+    private string BuildQueryString()
+    {
+        var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+        if (!string.IsNullOrWhiteSpace(searchRequest.Keyword)) query["keyword"] = searchRequest.Keyword;
+        if (!string.IsNullOrWhiteSpace(searchRequest.Phase)) query["phase"] = searchRequest.Phase;
+        if (!string.IsNullOrWhiteSpace(searchRequest.Drug)) query["drug"] = searchRequest.Drug;
+        if (!string.IsNullOrWhiteSpace(searchRequest.Therapy)) query["therapy"] = searchRequest.Therapy;
+        if (!string.IsNullOrWhiteSpace(searchRequest.DiseaseSite)) query["diseaseSite"] = searchRequest.DiseaseSite;
+        if (!string.IsNullOrWhiteSpace(searchRequest.ManagementGroup)) query["managementGroup"] = searchRequest.ManagementGroup;
+        if (!string.IsNullOrWhiteSpace(searchRequest.OncologyGroup)) query["oncologyGroup"] = searchRequest.OncologyGroup;
+        if (!string.IsNullOrWhiteSpace(searchRequest.PrincipalInvestigatorId)) query["principalInvestigatorId"] = searchRequest.PrincipalInvestigatorId;
+        if (!string.IsNullOrWhiteSpace(searchRequest.StudySite)) query["studySite"] = searchRequest.StudySite;
+
+        return query.ToString() ?? string.Empty;
+    }
+
+    private sealed class SearchRequest
+    {
+        public string Keyword { get; set; } = string.Empty;
+        public string Age { get; set; } = string.Empty;
+        public string Phase { get; set; } = string.Empty;
+        public string Drug { get; set; } = string.Empty;
+        public string Therapy { get; set; } = string.Empty;
+        public string DiseaseSite { get; set; } = string.Empty;
+        public string ManagementGroup { get; set; } = string.Empty;
+        public string OncologyGroup { get; set; } = string.Empty;
+        public string PrincipalInvestigatorId { get; set; } = string.Empty;
+        public string StudySite { get; set; } = string.Empty;
+    }
+}

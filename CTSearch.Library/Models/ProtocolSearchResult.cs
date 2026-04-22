@@ -6,9 +6,5 @@ using System.Threading.Tasks;
 
 namespace CTSearch.Library.Models
 {
-    public record ProtocolSearchResult(int Count, List<ProtocolItem> Values)
-    {
-        int Count = Count;
-        List<ProtocolItem> Values = Values;
-    }
+    public record ProtocolSearchResult(int Count, List<ProtocolItem> Values);
 }

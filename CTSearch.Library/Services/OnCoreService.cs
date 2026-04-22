@@ -20,13 +20,28 @@ namespace CTSearch.Library.Services
             // e.g., "https://your-oncore-domain.edu/arp/api/"
         }
 
-        public async Task<ProtocolSearchResult> SearchProtocolsAsync(string? keyword = null, string? ageGroup = null, string? phase = null)
+        public async Task<ProtocolSearchResult> SearchProtocolsAsync(
+            string? keyword = null,
+            string? phase = null,
+            string? drug = null,
+            string? therapy = null,
+            string? diseaseSite = null,
+            string? managementGroup = null,
+            string? oncologyGroup = null,
+            string? principalInvestigatorId = null,
+            string? studySite = null)
         {
             var query = HttpUtility.ParseQueryString(string.Empty);
 
             if (!string.IsNullOrWhiteSpace(keyword)) query["keyword"] = keyword;
-            if (!string.IsNullOrWhiteSpace(ageGroup)) query["ageGroup"] = ageGroup;
             if (!string.IsNullOrWhiteSpace(phase)) query["phase"] = phase;
+            if (!string.IsNullOrWhiteSpace(drug)) query["drug"] = drug;
+            if (!string.IsNullOrWhiteSpace(therapy)) query["therapy"] = therapy;
+            if (!string.IsNullOrWhiteSpace(diseaseSite)) query["diseaseSite"] = diseaseSite;
+            if (!string.IsNullOrWhiteSpace(managementGroup)) query["managementGroup"] = managementGroup;
+            if (!string.IsNullOrWhiteSpace(oncologyGroup)) query["oncologyGroup"] = oncologyGroup;
+            if (!string.IsNullOrWhiteSpace(principalInvestigatorId)) query["principalInvestigatorId"] = principalInvestigatorId;
+            if (!string.IsNullOrWhiteSpace(studySite)) query["studySite"] = studySite;
 
             string url = $"protocol/search?{query}";
 

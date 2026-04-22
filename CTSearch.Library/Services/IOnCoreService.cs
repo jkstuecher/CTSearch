@@ -9,7 +9,16 @@ namespace CTSearch.Library.Services
 {
     public interface IOnCoreService
     {
-        Task<ProtocolSearchResult> SearchProtocolsAsync(string? keyword = null, string? ageGroup = null, string? phase = null);
+        Task<ProtocolSearchResult> SearchProtocolsAsync(
+            string? keyword = null,
+            string? phase = null,
+            string? drug = null,
+            string? therapy = null,
+            string? diseaseSite = null,
+            string? managementGroup = null,
+            string? oncologyGroup = null,
+            string? principalInvestigatorId = null,
+            string? studySite = null);
         Task<ProtocolDetails?> GetProtocolDetailsAsync(string protocolNo);
         Task<List<string>> GetDiseaseSitesAsync();
     }
