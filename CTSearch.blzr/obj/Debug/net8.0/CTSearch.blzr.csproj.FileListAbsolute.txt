@@ -69,3 +69,8 @@ C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Debug\net8.0\refint\CTSea
 C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Debug\net8.0\CTSearch.blzr.pdb
 C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Debug\net8.0\CTSearch.blzr.genruntimeconfig.cache
 C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Debug\net8.0\ref\CTSearch.blzr.dll
+C:\Users\stue04\Source\Repos\CTSearch\CTSearch.blzr\bin\Debug\net8.0\CTSearch.library.dll
+C:\Users\stue04\Source\Repos\CTSearch\CTSearch.blzr\bin\Debug\net8.0\CTSearch.library.pdb
+C:\Users\stue04\Source\Repos\CTSearch\CTSearch.blzr\obj\Debug\net8.0\CTSearch.blzr.csproj.AssemblyReference.cache
+C:\Users\stue04\Source\Repos\CTSearch\CTSearch.blzr\obj\Debug\net8.0\scopedcss\Components\Pages\Home.razor.rz.scp.css
+C:\Users\stue04\Source\Repos\CTSearch\CTSearch.blzr\obj\Debug\net8.0\CTSearch.4DF6441C.Up2Date

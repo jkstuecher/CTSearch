@@ -34,7 +34,7 @@ namespace CTSearch.Cons
             using HttpClient client = new HttpClient();
 
             Console.WriteLine("--- OnCore ARP Clinical Trial Search ---");
-            Console.Write("Enter a search keyword (e.g., Cancer): ");
+            Console.Write("Enter a search keyword:");
             string? keyword = Console.ReadLine();
 
             try
