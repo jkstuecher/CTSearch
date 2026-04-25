@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CTSearch.api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+45e509fde9534c26b3b69c0f989aa41236c9e134")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3e83cf8804a9177304bc3ed956138a3575527f2f")]
 [assembly: System.Reflection.AssemblyProductAttribute("CTSearch.api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CTSearch.api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
