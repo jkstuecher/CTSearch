@@ -1,9 +1,0 @@
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\CTSearch.blzr.exe
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\appsettings.Development.json
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\appsettings.json
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\CTSearch.blzr.dll
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\CTSearch.blzr.deps.json
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\CTSearch.blzr.runtimeconfig.json
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\CTSearch.blzr.pdb
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\CTSearch.library.dll
-C:\Users\stuec\source\repos\CTSearch\CTSearch.blzr\obj\Release\net8.0\PubTmp\Out\CTSearch.library.pdb
