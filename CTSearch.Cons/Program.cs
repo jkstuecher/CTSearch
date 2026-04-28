@@ -33,7 +33,7 @@ namespace CTSearch.Cons
             string baseUrl = "https://osu-oncore-test.advarra.app/arp/api/";
             using HttpClient client = new HttpClient();
 
-            Console.WriteLine("---OSUCCC OnCore ARP Clinical Trial Search---");
+            Console.WriteLine("--- OSUCCC OnCore ARP Clinical Trial Search ---");
             Console.Write("Enter a search keyword:");
             string? keyword = Console.ReadLine();
 
