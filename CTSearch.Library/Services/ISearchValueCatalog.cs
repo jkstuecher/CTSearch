@@ -4,6 +4,7 @@ namespace CTSearch.Library.Services
 {
     public interface ISearchValueCatalog
     {
+        Task<IReadOnlyList<SearchValueOption>> GetAgeGroupOptionsAsync();
         Task<IReadOnlyList<SearchValueOption>> GetPhaseOptionsAsync();
         Task<IReadOnlyList<SearchValueOption>> GetDrugOptionsAsync();
         Task<IReadOnlyList<SearchValueOption>> GetTherapyOptionsAsync();

@@ -11,6 +11,7 @@ namespace CTSearch.Library.Services
     {
         Task<ProtocolSearchResult> SearchProtocolsAsync(
             string? keyword = null,
+            string? ageGroup = null,
             string? phase = null,
             string? drug = null,
             string? therapy = null,

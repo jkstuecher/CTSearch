@@ -7,6 +7,13 @@ namespace CTSearch.Library.Services
     public sealed class EmbeddedSearchValueCatalog : ISearchValueCatalog
     {
         private const string ResourcePrefix = "CTSearch.Library.RefDocs.Values.";
+        private static readonly IReadOnlyList<SearchValueOption> AgeGroupOptions =
+        [
+            new("Adults", "Adults"),
+            new("Children", "Children"),
+            new("Both", "Both")
+        ];
+
         private readonly Assembly _assembly = typeof(EmbeddedSearchValueCatalog).Assembly;
         private readonly Lazy<IReadOnlyList<SearchValueOption>> _phaseOptions;
         private readonly Lazy<IReadOnlyList<SearchValueOption>> _drugOptions;
@@ -19,7 +26,7 @@ namespace CTSearch.Library.Services
 
         public EmbeddedSearchValueCatalog()
         {
-            _phaseOptions = new(() => LoadCodeDescriptionOptions("Phase.txt"));
+            _phaseOptions = new(() => LoadCodeDescriptionOptions("Phase.txt", useDescriptionAsValue: true));
             _drugOptions = new(() => LoadCodeDescriptionOptions("drug.txt"));
             _therapyOptions = new(() => LoadCodeDescriptionOptions("therapy.txt"));
             _diseaseSiteOptions = new(() => LoadCodeDescriptionOptions("Disease sites.txt", useDescriptionWhenCodeMissing: true));
@@ -28,6 +35,8 @@ namespace CTSearch.Library.Services
             _principalInvestigatorOptions = new(LoadPrincipalInvestigatorOptions);
             _studySiteOptions = new(() => LoadCodeDescriptionOptions("Study Stie.txt"));
         }
+
+        public Task<IReadOnlyList<SearchValueOption>> GetAgeGroupOptionsAsync() => Task.FromResult(AgeGroupOptions);
 
         public Task<IReadOnlyList<SearchValueOption>> GetPhaseOptionsAsync() => Task.FromResult(_phaseOptions.Value);
 
@@ -45,7 +54,10 @@ namespace CTSearch.Library.Services
 
         public Task<IReadOnlyList<SearchValueOption>> GetStudySiteOptionsAsync() => Task.FromResult(_studySiteOptions.Value);
 
-        private IReadOnlyList<SearchValueOption> LoadCodeDescriptionOptions(string fileName, bool useDescriptionWhenCodeMissing = false)
+        private IReadOnlyList<SearchValueOption> LoadCodeDescriptionOptions(
+            string fileName,
+            bool useDescriptionWhenCodeMissing = false,
+            bool useDescriptionAsValue = false)
         {
             using var document = LoadJsonDocument(fileName);
             var values = document.RootElement.GetProperty("values");
@@ -58,9 +70,11 @@ namespace CTSearch.Library.Services
                     ? codeElement.GetString()
                     : null;
 
-                var value = !string.IsNullOrWhiteSpace(code)
-                    ? code
-                    : useDescriptionWhenCodeMissing ? label : null;
+                var value = useDescriptionAsValue
+                    ? label
+                    : !string.IsNullOrWhiteSpace(code)
+                        ? code
+                        : useDescriptionWhenCodeMissing ? label : null;
 
                 if (!string.IsNullOrWhiteSpace(value) && !string.IsNullOrWhiteSpace(label))
                 {

@@ -22,12 +22,18 @@
             </div>
 
             <div class="field">
-                <label for="age">Age (not functional)</label>
-                <InputText id="age" @bind-Value="searchRequest.Age" class="form-control" placeholder="Any age" disabled />
+                <label for="age">Age (Not Functional)</label>
+                <InputSelect id="age" @bind-Value="searchRequest.AgeGroup" class="form-select" disabled>
+                    <option value="">Any age group</option>
+                    @foreach (var option in ageGroupOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </InputSelect>
             </div>
 
             <div class="field">
-                <label for="phase">Phase (not functional)</label>
+                <label for="phase">Phase (Not Functional)</label>
                 <InputSelect id="phase" @bind-Value="searchRequest.Phase" class="form-select" disabled>
                     <option value="">Any phase</option>
                     @foreach (var option in phaseOptions)
@@ -203,6 +209,18 @@
                     </div>
                 </div>
 
+                @if (!string.IsNullOrWhiteSpace(selectedDetails.NctId))
+                {
+                    <div class="detail-block">
+                        <a class="external-study-link"
+                           href="@BuildClinicalTrialsGovUrl(selectedDetails.NctId)"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            View on ClinicalTrials.gov
+                        </a>
+                    </div>
+                }
+
                 <div class="detail-block">
                     <span class="detail-label">Objective</span>
                     <p>@(selectedDetails.Objective ?? "Not provided")</p>
@@ -236,6 +254,7 @@
 
 @code {
     private readonly SearchRequest searchRequest = new();
+    private IReadOnlyList<SearchValueOption> ageGroupOptions = Array.Empty<SearchValueOption>();
     private IReadOnlyList<SearchValueOption> phaseOptions = Array.Empty<SearchValueOption>();
     private IReadOnlyList<SearchValueOption> drugOptions = Array.Empty<SearchValueOption>();
     private IReadOnlyList<SearchValueOption> therapyOptions = Array.Empty<SearchValueOption>();
@@ -254,6 +273,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var ageGroupTask = SearchValueCatalog.GetAgeGroupOptionsAsync();
         var phaseTask = SearchValueCatalog.GetPhaseOptionsAsync();
         var drugTask = SearchValueCatalog.GetDrugOptionsAsync();
         var therapyTask = SearchValueCatalog.GetTherapyOptionsAsync();
@@ -264,6 +284,7 @@
         var studySiteTask = SearchValueCatalog.GetStudySiteOptionsAsync();
 
         await Task.WhenAll(
+            ageGroupTask,
             phaseTask,
             drugTask,
             therapyTask,
@@ -273,6 +294,7 @@
             principalInvestigatorTask,
             studySiteTask);
 
+        ageGroupOptions = ageGroupTask.Result;
         phaseOptions = phaseTask.Result;
         drugOptions = drugTask.Result;
         therapyOptions = therapyTask.Result;
@@ -293,6 +315,7 @@
         selectedProtocolNo = null;
 
         if (string.IsNullOrWhiteSpace(searchRequest.Keyword) &&
+            string.IsNullOrWhiteSpace(searchRequest.AgeGroup) &&
             string.IsNullOrWhiteSpace(searchRequest.Phase) &&
             string.IsNullOrWhiteSpace(searchRequest.Drug) &&
             string.IsNullOrWhiteSpace(searchRequest.Therapy) &&
@@ -312,6 +335,7 @@
         {
             searchResults = await OnCoreService.SearchProtocolsAsync(
                 searchRequest.Keyword,
+                searchRequest.AgeGroup,
                 searchRequest.Phase,
                 searchRequest.Drug,
                 searchRequest.Therapy,
@@ -361,6 +385,7 @@
     private void ClearSearch()
     {
         searchRequest.Keyword = string.Empty;
+        searchRequest.AgeGroup = string.Empty;
         searchRequest.Phase = string.Empty;
         searchRequest.Drug = string.Empty;
         searchRequest.Therapy = string.Empty;
@@ -383,6 +408,7 @@
         var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
         if (!string.IsNullOrWhiteSpace(searchRequest.Keyword)) query["keyword"] = searchRequest.Keyword;
+        if (!string.IsNullOrWhiteSpace(searchRequest.AgeGroup)) query["ageGroup"] = searchRequest.AgeGroup;
         if (!string.IsNullOrWhiteSpace(searchRequest.Phase)) query["phase"] = searchRequest.Phase;
         if (!string.IsNullOrWhiteSpace(searchRequest.Drug)) query["drug"] = searchRequest.Drug;
         if (!string.IsNullOrWhiteSpace(searchRequest.Therapy)) query["therapy"] = searchRequest.Therapy;
@@ -395,10 +421,15 @@
         return query.ToString() ?? string.Empty;
     }
 
+    private static string BuildClinicalTrialsGovUrl(string? nctId)
+    {
+        return $"https://clinicaltrials.gov/study/{Uri.EscapeDataString(nctId ?? string.Empty)}";
+    }
+
     private sealed class SearchRequest
     {
         public string Keyword { get; set; } = string.Empty;
-        public string Age { get; set; } = string.Empty;
+        public string AgeGroup { get; set; } = string.Empty;
         public string Phase { get; set; } = string.Empty;
         public string Drug { get; set; } = string.Empty;
         public string Therapy { get; set; } = string.Empty;

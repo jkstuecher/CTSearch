@@ -223,6 +223,30 @@
     white-space: pre-wrap;
 }
 
+.external-study-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.6rem 1rem;
+    color: var(--osu-white);
+    background: var(--osu-scarlet);
+    border-radius: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.external-study-link:hover {
+    background: var(--osu-scarlet-dark-40);
+    transform: translateY(-1px);
+}
+
+.external-study-link:focus-visible {
+    outline: 2px solid var(--osu-scarlet);
+    outline-offset: 2px;
+}
+
 .tag-list {
     display: flex;
     flex-wrap: wrap;

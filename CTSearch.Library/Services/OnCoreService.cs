@@ -22,6 +22,7 @@ namespace CTSearch.Library.Services
 
         public async Task<ProtocolSearchResult> SearchProtocolsAsync(
             string? keyword = null,
+            string? ageGroup = null,
             string? phase = null,
             string? drug = null,
             string? therapy = null,
@@ -34,6 +35,7 @@ namespace CTSearch.Library.Services
             var query = HttpUtility.ParseQueryString(string.Empty);
 
             if (!string.IsNullOrWhiteSpace(keyword)) query["keyword"] = keyword;
+            if (!string.IsNullOrWhiteSpace(ageGroup)) query["ageGroup"] = ageGroup;
             if (!string.IsNullOrWhiteSpace(phase)) query["phase"] = phase;
             if (!string.IsNullOrWhiteSpace(drug)) query["drug"] = drug;
             if (!string.IsNullOrWhiteSpace(therapy)) query["therapy"] = therapy;
