@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject IOnCoreService OnCoreService
 @inject ISearchValueCatalog SearchValueCatalog
+@inject IClinicalTrialsGovService ClinicalTrialsGovService
 
 <PageTitle>Clinical Trial Search</PageTitle>
 
@@ -121,9 +122,68 @@
             </div>
         </div>
 
+        <div class="eligibility-refinement">
+            <div class="refinement-header">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm refinement-toggle"
+                        @onclick="ToggleEligibilityRefinement"
+                        aria-expanded="@showEligibilityRefinement"
+                        aria-controls="eligibility-refinement-controls">
+                    @(showEligibilityRefinement ? "Hide Eligibility Refinement" : "Show Eligibility Refinement")
+                </button>
+                <span>ClinicalTrials.gov live check</span>
+            </div>
+
+            @if (showEligibilityRefinement)
+            {
+                <div id="eligibility-refinement-controls">
+                    <div class="search-grid refinement-grid">
+                        <div class="field">
+                            <label for="patientAge">Patient Age</label>
+                            <InputNumber id="patientAge" @bind-Value="eligibilityRequest.AgeYears" class="form-control" min="0" max="120" />
+                        </div>
+
+                        <div class="field">
+                            <label for="patientSex">Patient Sex</label>
+                            <InputSelect id="patientSex" @bind-Value="eligibilityRequest.Sex" class="form-select">
+                                <option value="">Not specified</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="MALE">Male</option>
+                            </InputSelect>
+                        </div>
+
+                        <div class="field">
+                            <label for="healthyVolunteer">Healthy Volunteer</label>
+                            <InputSelect id="healthyVolunteer" @bind-Value="eligibilityRequest.HealthyVolunteerStatus" class="form-select">
+                                <option value="">Not specified</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="clinical-factor-list">
+                        @foreach (var option in clinicalFactorOptions)
+                        {
+                            <label class="clinical-factor">
+                                <input type="checkbox"
+                                       checked="@selectedClinicalFactors.Contains(option.Value)"
+                                       @onchange="eventArgs => ToggleClinicalFactor(option.Value, eventArgs)" />
+                                <span>@option.Label</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p class="refinement-collapsed-summary">@GetEligibilityRefinementSummary()</p>
+            }
+        </div>
+
         <div class="actions">
-            <button type="submit" class="btn btn-primary" disabled="@isLoading">@(isLoading ? "Searching..." : "Search Trials")</button>
-            <button type="button" class="btn btn-outline-secondary" @onclick="ClearSearch" disabled="@isLoading">Clear</button>
+            <button type="submit" class="btn btn-primary" disabled="@(isLoading || isRefining)">@(isLoading ? "Searching..." : isRefining ? "Refining..." : "Search Trials")</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="ClearSearch" disabled="@(isLoading || isRefining)">Clear</button>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -134,6 +194,10 @@
         {
             <div class="status-message">
                 <p>Found @searchResults.Count trial(s).</p>
+                @if (!string.IsNullOrWhiteSpace(refinementMessage))
+                {
+                    <p>@refinementMessage</p>
+                }
                 <p class="query-string-label">API query:</p>
                 <code class="query-string-display">/protocol/search?@lastQueryString</code>
             </div>
@@ -169,6 +233,21 @@
                         <span class="protocol-number">@trial.ProtocolNo</span>
                         <strong>@trial.Title</strong>
                         <span class="trial-status">@trial.Status</span>
+                        @if (trial.EligibilityAssessment is not null)
+                        {
+                            <div class="eligibility-summary @GetEligibilityStatusClass(trial.EligibilityAssessment.Status)">
+                                <span>@trial.EligibilityAssessment.StatusLabel</span>
+                                @if (trial.EligibilityAssessment.HasReasons)
+                                {
+                                    <ul>
+                                        @foreach (var reason in trial.EligibilityAssessment.Reasons)
+                                        {
+                                            <li>@reason</li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        }
                     </button>
                 }
             </div>
@@ -221,6 +300,25 @@
                     </div>
                 }
 
+                @if (GetSelectedEligibilityAssessment() is { } assessment)
+                {
+                    <div class="detail-block">
+                        <span class="detail-label">Eligibility Refinement</span>
+                        <div class="detail-eligibility @GetEligibilityStatusClass(assessment.Status)">
+                            <strong>@assessment.StatusLabel</strong>
+                            @if (assessment.HasReasons)
+                            {
+                                <ul>
+                                    @foreach (var reason in assessment.Reasons)
+                                    {
+                                        <li>@reason</li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    </div>
+                }
+
                 <div class="detail-block">
                     <span class="detail-label">Objective</span>
                     <p>@(selectedDetails.Objective ?? "Not provided")</p>
@@ -253,6 +351,9 @@
 </section>
 
 @code {
+    private const int MaxConcurrentEligibilityLookups = 6;
+    private static readonly TimeSpan EligibilityLookupTimeout = TimeSpan.FromSeconds(12);
+
     private readonly SearchRequest searchRequest = new();
     private IReadOnlyList<SearchValueOption> ageGroupOptions = Array.Empty<SearchValueOption>();
     private IReadOnlyList<SearchValueOption> phaseOptions = Array.Empty<SearchValueOption>();
@@ -263,9 +364,17 @@
     private IReadOnlyList<SearchValueOption> oncologyGroupOptions = Array.Empty<SearchValueOption>();
     private IReadOnlyList<SearchValueOption> principalInvestigatorOptions = Array.Empty<SearchValueOption>();
     private IReadOnlyList<SearchValueOption> studySiteOptions = Array.Empty<SearchValueOption>();
+    private IReadOnlyList<ClinicalFactorOption> clinicalFactorOptions = Array.Empty<ClinicalFactorOption>();
+    private readonly EligibilityRequest eligibilityRequest = new();
+    private readonly HashSet<string> selectedClinicalFactors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ProtocolDetails?> detailsCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object detailsCacheLock = new();
     private bool hasSearched;
     private bool isLoading;
+    private bool isRefining;
+    private bool showEligibilityRefinement;
     private string? errorMessage;
+    private string? refinementMessage;
     private string lastQueryString = string.Empty;
     private string? selectedProtocolNo;
     private ProtocolSearchResult? searchResults;
@@ -282,6 +391,7 @@
         var oncologyGroupTask = SearchValueCatalog.GetOncologyGroupOptionsAsync();
         var principalInvestigatorTask = SearchValueCatalog.GetPrincipalInvestigatorOptionsAsync();
         var studySiteTask = SearchValueCatalog.GetStudySiteOptionsAsync();
+        clinicalFactorOptions = ClinicalTrialsGovService.ClinicalFactorOptions;
 
         await Task.WhenAll(
             ageGroupTask,
@@ -310,9 +420,12 @@
         errorMessage = null;
         hasSearched = true;
         isLoading = true;
+        isRefining = false;
         lastQueryString = BuildQueryString();
+        refinementMessage = null;
         selectedDetails = null;
         selectedProtocolNo = null;
+        detailsCache.Clear();
 
         if (string.IsNullOrWhiteSpace(searchRequest.Keyword) &&
             string.IsNullOrWhiteSpace(searchRequest.AgeGroup) &&
@@ -345,9 +458,23 @@
                 searchRequest.PrincipalInvestigatorId,
                 searchRequest.StudySite);
 
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+
             if (searchResults.Values.Count > 0)
             {
                 await LoadDetailsAsync(searchResults.Values[0].ProtocolNo);
+
+                if (HasEligibilityRefinement())
+                {
+                    isRefining = true;
+                    refinementMessage = $"ClinicalTrials.gov refinement is checking {searchResults.Values.Count} trial(s).";
+                    await InvokeAsync(StateHasChanged);
+
+                    await ApplyEligibilityRefinementAsync(searchResults.Values);
+
+                    isRefining = false;
+                }
             }
         }
         catch (Exception ex)
@@ -357,7 +484,66 @@
         }
         finally
         {
+            isRefining = false;
             isLoading = false;
+        }
+    }
+
+    private async Task ApplyEligibilityRefinementAsync(IReadOnlyList<ProtocolItem> protocols)
+    {
+        var criteria = BuildEligibilityCriteria();
+        using var throttle = new SemaphoreSlim(MaxConcurrentEligibilityLookups);
+
+        var tasks = protocols.Select(protocol => AssessProtocolEligibilityAsync(protocol, criteria, throttle));
+        await Task.WhenAll(tasks);
+
+        var exclusions = protocols.Count(protocol =>
+            protocol.EligibilityAssessment?.Status == EligibilityAssessmentStatus.PotentiallyExcluded);
+        var unavailable = protocols.Count(protocol =>
+            protocol.EligibilityAssessment?.Status is EligibilityAssessmentStatus.MissingNctId or EligibilityAssessmentStatus.Unavailable);
+
+        refinementMessage = unavailable > 0
+            ? $"ClinicalTrials.gov refinement flagged {exclusions} potential exclusion(s); {unavailable} trial(s) need review."
+            : $"ClinicalTrials.gov refinement flagged {exclusions} potential exclusion(s).";
+    }
+
+    private async Task AssessProtocolEligibilityAsync(
+        ProtocolItem protocol,
+        EligibilityRefinementCriteria criteria,
+        SemaphoreSlim throttle)
+    {
+        await throttle.WaitAsync();
+
+        try
+        {
+            using var timeout = new CancellationTokenSource(EligibilityLookupTimeout);
+            var details = await GetProtocolDetailsCachedAsync(protocol.ProtocolNo, timeout.Token);
+            protocol.EligibilityAssessment = await ClinicalTrialsGovService.AssessStudyAsync(
+                details?.NctId,
+                criteria,
+                timeout.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            protocol.EligibilityAssessment = new EligibilityAssessment
+            {
+                Status = EligibilityAssessmentStatus.Unavailable,
+                StatusLabel = "Needs review",
+                Reasons = ["Eligibility refinement timed out while checking live study data."]
+            };
+        }
+        catch (Exception ex)
+        {
+            protocol.EligibilityAssessment = new EligibilityAssessment
+            {
+                Status = EligibilityAssessmentStatus.Unavailable,
+                StatusLabel = "Needs review",
+                Reasons = [$"Eligibility refinement failed: {ex.Message}"]
+            };
+        }
+        finally
+        {
+            throttle.Release();
         }
     }
 
@@ -373,7 +559,7 @@
 
         try
         {
-            selectedDetails = await OnCoreService.GetProtocolDetailsAsync(protocolNo);
+            selectedDetails = await GetProtocolDetailsCachedAsync(protocolNo);
         }
         catch (Exception ex)
         {
@@ -394,6 +580,10 @@
         searchRequest.OncologyGroup = string.Empty;
         searchRequest.PrincipalInvestigatorId = string.Empty;
         searchRequest.StudySite = string.Empty;
+        eligibilityRequest.AgeYears = null;
+        eligibilityRequest.Sex = string.Empty;
+        eligibilityRequest.HealthyVolunteerStatus = string.Empty;
+        selectedClinicalFactors.Clear();
         hasSearched = false;
         isLoading = false;
         errorMessage = null;
@@ -401,6 +591,95 @@
         searchResults = null;
         selectedDetails = null;
         selectedProtocolNo = null;
+        isRefining = false;
+        refinementMessage = null;
+        detailsCache.Clear();
+    }
+
+    private async Task<ProtocolDetails?> GetProtocolDetailsCachedAsync(
+        string protocolNo,
+        CancellationToken cancellationToken = default)
+    {
+        lock (detailsCacheLock)
+        {
+            if (detailsCache.TryGetValue(protocolNo, out var cachedDetails))
+            {
+                return cachedDetails;
+            }
+        }
+
+        var details = await OnCoreService.GetProtocolDetailsAsync(protocolNo, cancellationToken);
+
+        lock (detailsCacheLock)
+        {
+            detailsCache[protocolNo] = details;
+        }
+
+        return details;
+    }
+
+    private bool HasEligibilityRefinement()
+    {
+        return eligibilityRequest.AgeYears is not null ||
+            !string.IsNullOrWhiteSpace(eligibilityRequest.Sex) ||
+            !string.IsNullOrWhiteSpace(eligibilityRequest.HealthyVolunteerStatus) ||
+            selectedClinicalFactors.Count > 0;
+    }
+
+    private EligibilityRefinementCriteria BuildEligibilityCriteria()
+    {
+        return new EligibilityRefinementCriteria
+        {
+            AgeYears = eligibilityRequest.AgeYears,
+            Sex = string.IsNullOrWhiteSpace(eligibilityRequest.Sex) ? null : eligibilityRequest.Sex,
+            IsHealthyVolunteer = bool.TryParse(eligibilityRequest.HealthyVolunteerStatus, out var isHealthyVolunteer)
+                ? isHealthyVolunteer
+                : null,
+            ClinicalFactorValues = selectedClinicalFactors.ToArray()
+        };
+    }
+
+    private void ToggleClinicalFactor(string value, ChangeEventArgs eventArgs)
+    {
+        if (eventArgs.Value is bool isSelected && isSelected)
+        {
+            selectedClinicalFactors.Add(value);
+            return;
+        }
+
+        selectedClinicalFactors.Remove(value);
+    }
+
+    private void ToggleEligibilityRefinement()
+    {
+        showEligibilityRefinement = !showEligibilityRefinement;
+    }
+
+    private string GetEligibilityRefinementSummary()
+    {
+        return HasEligibilityRefinement()
+            ? "Eligibility refinement criteria are set. Expand to review or edit them."
+            : "Eligibility refinement is hidden. Expand to add structured patient criteria.";
+    }
+
+    private EligibilityAssessment? GetSelectedEligibilityAssessment()
+    {
+        return selectedProtocolNo is null
+            ? null
+            : searchResults?.Values.FirstOrDefault(trial =>
+                string.Equals(trial.ProtocolNo, selectedProtocolNo, StringComparison.OrdinalIgnoreCase))
+                ?.EligibilityAssessment;
+    }
+
+    private static string GetEligibilityStatusClass(EligibilityAssessmentStatus status)
+    {
+        return status switch
+        {
+            EligibilityAssessmentStatus.PotentiallyExcluded => "eligibility-excluded",
+            EligibilityAssessmentStatus.PotentialMatch => "eligibility-match",
+            EligibilityAssessmentStatus.MissingNctId or EligibilityAssessmentStatus.Unavailable => "eligibility-review",
+            _ => "eligibility-review"
+        };
     }
 
     private string BuildQueryString()
@@ -438,5 +717,12 @@
         public string OncologyGroup { get; set; } = string.Empty;
         public string PrincipalInvestigatorId { get; set; } = string.Empty;
         public string StudySite { get; set; } = string.Empty;
+    }
+
+    private sealed class EligibilityRequest
+    {
+        public int? AgeYears { get; set; }
+        public string Sex { get; set; } = string.Empty;
+        public string HealthyVolunteerStatus { get; set; } = string.Empty;
     }
 }

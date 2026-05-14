@@ -99,6 +99,68 @@
     margin-top: 1.2rem;
 }
 
+.eligibility-refinement {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--osu-gray-light-40);
+}
+
+.refinement-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.refinement-header span {
+    color: var(--osu-gray-dark-20);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.refinement-toggle {
+    min-width: 13rem;
+}
+
+.refinement-collapsed-summary {
+    margin: 0.75rem 0 0;
+    color: var(--osu-gray-dark-40);
+    font-size: 0.95rem;
+}
+
+.refinement-grid {
+    margin-top: 0.9rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.clinical-factor-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+
+.clinical-factor {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    min-height: 2.5rem;
+    padding: 0.65rem 0.75rem;
+    color: var(--osu-gray-dark-80);
+    background: var(--osu-gray-light-90);
+    border: 1px solid var(--osu-gray-light-40);
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.clinical-factor input {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.15rem;
+    accent-color: var(--osu-scarlet);
+}
+
 .status-message {
     margin: 1rem 0 0;
     color: var(--osu-gray-dark-40);
@@ -200,6 +262,50 @@
 .detail-label {
     color: var(--osu-gray-dark-20);
     font-size: 0.9rem;
+}
+
+.eligibility-summary,
+.detail-eligibility {
+    width: 100%;
+    margin-top: 0.3rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.eligibility-summary span,
+.detail-eligibility strong {
+    display: block;
+    font-weight: 700;
+}
+
+.eligibility-summary ul,
+.detail-eligibility ul {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+}
+
+.eligibility-summary li,
+.detail-eligibility li {
+    margin-top: 0.2rem;
+}
+
+.eligibility-excluded {
+    color: #7a1f1f;
+    background: #fff1f1;
+    border: 1px solid #e3a7a7;
+}
+
+.eligibility-match {
+    color: #164f2f;
+    background: #edf8f1;
+    border: 1px solid #9fd1b4;
+}
+
+.eligibility-review {
+    color: var(--osu-gray-dark-80);
+    background: var(--osu-gray-light-90);
+    border: 1px solid var(--osu-gray-light-40);
 }
 
 .detail-card {

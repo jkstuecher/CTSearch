@@ -19,6 +19,17 @@ namespace CTSearch.blzr
                     ?? throw new InvalidOperationException("Missing configuration value 'OnCoreApi:BaseUrl'.");
 
                 httpClient.BaseAddress = new Uri(baseUrl);
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
+                httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
+            builder.Services.AddHttpClient<IClinicalTrialsGovService, ClinicalTrialsGovService>((serviceProvider, httpClient) =>
+            {
+                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+                var baseUrl = configuration["ClinicalTrialsGovApi:BaseUrl"]
+                    ?? throw new InvalidOperationException("Missing configuration value 'ClinicalTrialsGovApi:BaseUrl'.");
+
+                httpClient.BaseAddress = new Uri(baseUrl);
+                httpClient.Timeout = TimeSpan.FromSeconds(15);
                 httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
             });
             builder.Services.AddSingleton<ISearchValueCatalog, EmbeddedSearchValueCatalog>();

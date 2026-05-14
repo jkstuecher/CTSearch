@@ -20,7 +20,7 @@ namespace CTSearch.Library.Services
             string? oncologyGroup = null,
             string? principalInvestigatorId = null,
             string? studySite = null);
-        Task<ProtocolDetails?> GetProtocolDetailsAsync(string protocolNo);
+        Task<ProtocolDetails?> GetProtocolDetailsAsync(string protocolNo, CancellationToken cancellationToken = default);
         Task<List<string>> GetDiseaseSitesAsync();
     }
 }

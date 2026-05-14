@@ -51,12 +51,12 @@ namespace CTSearch.Library.Services
             return result ?? new ProtocolSearchResult(0, new List<ProtocolItem>());
         }
 
-        public async Task<ProtocolDetails?> GetProtocolDetailsAsync(string protocolNo)
+        public async Task<ProtocolDetails?> GetProtocolDetailsAsync(string protocolNo, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(protocolNo)) return null;
 
             string url = $"protocol?protocolNo={HttpUtility.UrlEncode(protocolNo)}";
-            return await _httpClient.GetFromJsonAsync<ProtocolDetails>(url);
+            return await _httpClient.GetFromJsonAsync<ProtocolDetails>(url, cancellationToken);
         }
 
         public async Task<List<string>> GetDiseaseSitesAsync()

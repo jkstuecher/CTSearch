@@ -17,6 +17,13 @@ namespace CTSearch.API
             builder.Services.AddHttpClient<IOnCoreService, OnCoreService>(client =>
             {
                 client.BaseAddress = new Uri("https://osu-oncore-test.advarra.app/arp/api/");
+                client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
+            builder.Services.AddHttpClient<IClinicalTrialsGovService, ClinicalTrialsGovService>(client =>
+            {
+                client.BaseAddress = new Uri("https://clinicaltrials.gov/api/v2/");
+                client.Timeout = TimeSpan.FromSeconds(15);
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
 

@@ -11,5 +11,6 @@ namespace CTSearch.Library.Models
         public string ProtocolNo { get; init; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public EligibilityAssessment? EligibilityAssessment { get; set; }
     }
 }
