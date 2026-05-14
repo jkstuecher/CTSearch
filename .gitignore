@@ -72,3 +72,5 @@ nunit-*.xml
 /CTSearch.Cons/bin/Debug/net8.0/CTSearch.library.pdb
 /CTSearch.Library/bin/Debug/net8.0/CTSearch.library.dll
 /CTSearch.Library/bin/Debug/net8.0/CTSearch.library.pdb
+/blzr-server.err.log
+/blzr-server.out.log
