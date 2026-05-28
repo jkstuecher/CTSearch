@@ -77,7 +77,7 @@
                 </InputSelect>
             </div>
 
-            <div class="field">
+            @* <div class="field">
                 <label for="managementGroup">Management Group</label>
                 <InputSelect id="managementGroup" @bind-Value="searchRequest.ManagementGroup" class="form-select">
                     <option value="">Any management group</option>
@@ -86,7 +86,7 @@
                         <option value="@option.Value">@option.Label</option>
                     }
                 </InputSelect>
-            </div>
+            </div> *@
 
             <div class="field">
                 <label for="oncologyGroup">Oncology Group</label>
@@ -99,7 +99,7 @@
                 </InputSelect>
             </div>
 
-            <div class="field field-wide">
+            @* <div class="field field-wide">
                 <label for="principalInvestigator">Principal Investigator</label>
                 <InputSelect id="principalInvestigator" @bind-Value="searchRequest.PrincipalInvestigatorId" class="form-select">
                     <option value="">Any principal investigator</option>
@@ -108,9 +108,9 @@
                         <option value="@option.Value">@option.Label</option>
                     }
                 </InputSelect>
-            </div>
+            </div> *@
 
-            <div class="field field-wide">
+            @* <div class="field field-wide">
                 <label for="studySite">Study Site</label>
                 <InputSelect id="studySite" @bind-Value="searchRequest.StudySite" class="form-select">
                     <option value="">Any study site</option>
@@ -119,9 +119,9 @@
                         <option value="@option.Value">@option.Label</option>
                     }
                 </InputSelect>
-            </div>
+            </div>*@
         </div>
-
+        <br />
         <div class="eligibility-refinement">
             <div class="refinement-header">
                 <button type="button"
